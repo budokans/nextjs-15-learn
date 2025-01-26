@@ -1,7 +1,9 @@
 'use client';
 
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import type { ChangeEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useDebouncedCallback } from 'use-debounce';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const queryParam = 'query';
 
@@ -9,6 +11,19 @@ export default function Search({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+
+  const onChange = useDebouncedCallback(
+    (event: ChangeEvent<HTMLInputElement>): void => {
+      const mutableSearchParams = new URLSearchParams(searchParams);
+
+      event.target.value
+        ? mutableSearchParams.set(queryParam, event.target.value)
+        : mutableSearchParams.delete(queryParam);
+
+      return router.replace(`${pathname}?${mutableSearchParams.toString()}`);
+    },
+    300
+  );
 
   return (
     <div className="relative flex flex-1 flex-shrink-0">
@@ -19,17 +34,7 @@ export default function Search({ placeholder }: { placeholder: string }) {
       <input
         className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
         placeholder={placeholder}
-        onChange={(event): void => {
-          const mutableSearchParams = new URLSearchParams(searchParams);
-
-          event.target.value
-            ? mutableSearchParams.set(queryParam, event.target.value)
-            : mutableSearchParams.delete(queryParam);
-
-          return router.replace(
-            `${pathname}?${mutableSearchParams.toString()}`
-          );
-        }}
+        onChange={onChange}
         defaultValue={searchParams.get(queryParam)?.toString()}
       />
 
