@@ -1,17 +1,13 @@
-import type { ReactElement } from 'react';
+import { Suspense, type ReactElement } from 'react';
 import { lusitana } from '@/app/ui/fonts';
 import { Card } from '@/app/ui/dashboard/cards';
 import RevenueChart from '@/app/ui/dashboard/revenue-chart';
 import LatestInvoices from '@/app/ui/dashboard/latest-invoices';
-import {
-  fetchCardData,
-  fetchLatestInvoices,
-  fetchRevenue,
-} from '@/app/lib/data';
+import { fetchCardData, fetchLatestInvoices } from '@/app/lib/data';
+import { RevenueChartSkeleton } from '@/app/ui/skeletons';
 
 const DashboardPage = async (): Promise<ReactElement> => {
-  const [revenue, latestInvoices, cardData] = await Promise.all([
-    fetchRevenue(),
+  const [latestInvoices, cardData] = await Promise.all([
     fetchLatestInvoices(),
     fetchCardData(),
   ]);
@@ -49,7 +45,9 @@ const DashboardPage = async (): Promise<ReactElement> => {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-8">
-        <RevenueChart revenue={revenue} />
+        <Suspense fallback={<RevenueChartSkeleton />}>
+          <RevenueChart />
+        </Suspense>
 
         <LatestInvoices latestInvoices={latestInvoices} />
       </div>
