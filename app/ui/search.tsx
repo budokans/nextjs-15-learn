@@ -6,6 +6,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const queryParam = 'query';
+const pageNumberParam = 'page';
 
 export default function Search({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
@@ -15,6 +16,8 @@ export default function Search({ placeholder }: { placeholder: string }) {
   const onChange = useDebouncedCallback(
     (event: ChangeEvent<HTMLInputElement>): void => {
       const mutableSearchParams = new URLSearchParams(searchParams);
+
+      mutableSearchParams.set(pageNumberParam, String(1));
 
       event.target.value
         ? mutableSearchParams.set(queryParam, event.target.value)
