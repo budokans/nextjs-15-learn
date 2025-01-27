@@ -1,11 +1,13 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { sql } from '@vercel/postgres';
 import {
   type Invoice,
   createInvoiceFormDataSchema,
 } from '@/app/lib/definitions';
 import { sanitiseCreateInvoiceData } from '@/app/lib/utils';
+import { redirect } from 'next/navigation';
 
 export const createInvoice = async (formData: FormData): Promise<void> => {
   const { customer_id, amount, status, date } = sanitiseCreateInvoiceData(
@@ -20,4 +22,9 @@ export const createInvoice = async (formData: FormData): Promise<void> => {
     INSERT INTO invoices (customer_id, amount, status, date)
     VALUES (${customer_id}, ${amount}, ${status}, ${date})
   `;
+
+  revalidatePath(afterCreatePath);
+  redirect(afterCreatePath);
 };
+
+const afterCreatePath = '/dashboard/invoices';
