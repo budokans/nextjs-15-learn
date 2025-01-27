@@ -28,3 +28,25 @@ export const createInvoice = async (formData: FormData): Promise<void> => {
 };
 
 const afterCreatePath = '/dashboard/invoices';
+
+export const updateInvoice = async (
+  id: string,
+  formData: FormData
+): Promise<void> => {
+  const { customer_id, amount, status } = sanitiseCreateInvoiceData(
+    createInvoiceFormDataSchema.parse({
+      customer_id: formData.get('customerId'),
+      amount: formData.get('amount'),
+      status: formData.get('status'),
+    })
+  );
+
+  await sql<Invoice>`
+    UPDATE invoices
+    SET customer_id = ${customer_id}, amount = ${amount}, status = ${status}
+    WHERE id = ${id}
+  `;
+
+  revalidatePath(afterCreatePath);
+  redirect(afterCreatePath);
+};
