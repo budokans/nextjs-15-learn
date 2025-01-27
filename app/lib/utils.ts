@@ -1,4 +1,8 @@
-import { Revenue } from './definitions';
+import type {
+  CreateInvoiceData,
+  CreateInvoiceFormData,
+  Revenue,
+} from '@/app/lib/definitions';
 
 export const formatCurrency = (amount: number) => {
   return (amount / 100).toLocaleString('en-US', {
@@ -9,7 +13,7 @@ export const formatCurrency = (amount: number) => {
 
 export const formatDateToLocal = (
   dateStr: string,
-  locale: string = 'en-US',
+  locale: string = 'en-US'
 ) => {
   const date = new Date(dateStr);
   const options: Intl.DateTimeFormatOptions = {
@@ -67,3 +71,14 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
     totalPages,
   ];
 };
+
+const toCents = (dollarValue: number): number => dollarValue * 100;
+const formatDate = (date: Date): string => date.toISOString().split('T')[0];
+
+export const sanitiseCreateInvoiceData = (
+  createInvoiceFormData: CreateInvoiceFormData
+): CreateInvoiceData => ({
+  ...createInvoiceFormData,
+  amount: toCents(Number(createInvoiceFormData.amount)),
+  date: formatDate(new Date()),
+});

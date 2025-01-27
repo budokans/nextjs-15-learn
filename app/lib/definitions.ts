@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 // This file contains type definitions for your data.
 // It describes the shape of the data, and what data type each property should accept.
 // For simplicity of teaching, we're manually defining these types.
@@ -16,15 +18,29 @@ export type Customer = {
   image_url: string;
 };
 
-export type Invoice = {
-  id: string;
-  customer_id: string;
-  amount: number;
-  date: string;
-  // In TypeScript, this is called a string union type.
-  // It means that the "status" property can only be one of the two strings: 'pending' or 'paid'.
-  status: 'pending' | 'paid';
-};
+const invoiceStatusSchema = z.union([z.literal('pending'), z.literal('paid')]);
+
+const invoiceSchema = z.object({
+  id: z.string(),
+  customer_id: z.string(),
+  amount: z.number(),
+  date: z.string(),
+  status: invoiceStatusSchema,
+});
+export type Invoice = z.infer<typeof invoiceSchema>;
+
+export const createInvoiceFormDataSchema = z.intersection(
+  invoiceSchema.omit({
+    id: true,
+    date: true,
+    amount: true,
+  }),
+  z.object({ amount: z.string() })
+);
+export type CreateInvoiceFormData = z.infer<typeof createInvoiceFormDataSchema>;
+
+export const createInvoiceDataSchema = invoiceSchema.omit({ id: true });
+export type CreateInvoiceData = z.infer<typeof createInvoiceDataSchema>;
 
 export type Revenue = {
   month: string;
