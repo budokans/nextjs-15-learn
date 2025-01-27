@@ -50,3 +50,8 @@ export const updateInvoice = async (
   revalidatePath(afterCreatePath);
   redirect(afterCreatePath);
 };
+
+export const deleteInvoice = async (id: string): Promise<void> => {
+  await sql`DELETE FROM invoices WHERE id = ${id}`;
+  revalidatePath('/dashboard/invoices');
+};
