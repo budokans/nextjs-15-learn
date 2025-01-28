@@ -79,6 +79,7 @@ export const sanitiseCreateInvoiceData = (
   createInvoiceFormData: CreateInvoiceFormData
 ): CreateInvoiceData => ({
   ...createInvoiceFormData,
+  customer_id: createInvoiceFormData.customerId,
   amount: toCents(Number(createInvoiceFormData.amount)),
   date: formatDate(new Date()),
 });
