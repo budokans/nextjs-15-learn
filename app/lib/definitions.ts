@@ -18,28 +18,35 @@ export type Customer = {
   image_url: string;
 };
 
-const invoiceStatusSchema = z.union([z.literal('pending'), z.literal('paid')]);
+const invoiceStatusSchema = z.enum(['pending', 'paid']);
 
-const invoiceSchema = z.object({
+const buildInvoiceStatusSchema = (
+  params?: z.RawCreateParams
+): z.ZodEnum<['pending', 'paid']> => z.enum(['pending', 'paid'], params);
+
+const invoiceDBSchema = z.object({
   id: z.string(),
   customer_id: z.string(),
   amount: z.number(),
   date: z.string(),
   status: invoiceStatusSchema,
 });
-export type Invoice = z.infer<typeof invoiceSchema>;
+export type DBInvoice = z.infer<typeof invoiceDBSchema>;
 
-export const createInvoiceFormDataSchema = z.intersection(
-  invoiceSchema.omit({
-    id: true,
-    date: true,
-    amount: true,
-  }),
-  z.object({ amount: z.string() })
-);
+export const createInvoiceFormDataSchema = z
+  .object({
+    customerId: z.string({ invalid_type_error: 'Please select a customer.' }),
+    amount: z.coerce
+      .number()
+      .gt(0, { message: 'Please enter an amount greater than $0.' }),
+    status: buildInvoiceStatusSchema({
+      invalid_type_error: 'Please select an invoice status.',
+    }),
+  })
+  .readonly();
 export type CreateInvoiceFormData = z.infer<typeof createInvoiceFormDataSchema>;
 
-export const createInvoiceDataSchema = invoiceSchema.omit({ id: true });
+export const createInvoiceDataSchema = invoiceDBSchema.omit({ id: true });
 export type CreateInvoiceData = z.infer<typeof createInvoiceDataSchema>;
 
 export type Revenue = {
