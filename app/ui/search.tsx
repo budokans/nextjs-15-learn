@@ -19,9 +19,11 @@ export default function Search({ placeholder }: { placeholder: string }) {
 
       mutableSearchParams.set(pageNumberParam, String(1));
 
-      event.target.value
-        ? mutableSearchParams.set(queryParam, event.target.value)
-        : mutableSearchParams.delete(queryParam);
+      if (event.target.value) {
+        mutableSearchParams.set(queryParam, event.target.value);
+      } else {
+        mutableSearchParams.delete(queryParam);
+      }
 
       return router.replace(`${pathname}?${mutableSearchParams.toString()}`);
     },
