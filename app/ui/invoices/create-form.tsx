@@ -2,7 +2,10 @@
 
 import { useActionState } from 'react';
 import Link from 'next/link';
-import type { CustomerField } from '@/app/lib/definitions';
+import type {
+  CreateInvoiceFormData,
+  CustomerField,
+} from '@/app/lib/definitions';
 import {
   CheckIcon,
   ClockIcon,
@@ -10,6 +13,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
+import { ValidationErrorsDisplay } from '@/app/ui/validation';
 import { type MutateInvoiceErrorState, createInvoice } from '@/app/lib/actions';
 
 export default function Form({ customers }: { customers: CustomerField[] }) {
@@ -48,18 +52,12 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
             <UserCircleIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
           </div>
 
-          <div
-            id="customer-input-validation-error"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {state.fieldErrors?.customerId &&
-              state.fieldErrors.customerId.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
-          </div>
+          {state.fieldErrors?.customerId && (
+            <ValidationErrorsDisplay<CreateInvoiceFormData>
+              fieldName="customerId"
+              errorMessages={state.fieldErrors.customerId}
+            />
+          )}
         </div>
 
         <div className="mb-4">
@@ -83,18 +81,12 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
             </div>
           </div>
 
-          <div
-            id="amount-input-validation-error"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {state.fieldErrors?.amount &&
-              state.fieldErrors.amount.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
-          </div>
+          {state.fieldErrors?.amount && (
+            <ValidationErrorsDisplay<CreateInvoiceFormData>
+              fieldName="amount"
+              errorMessages={state.fieldErrors.amount}
+            />
+          )}
         </div>
 
         <fieldset aria-describedby="status-input-validation-error">
@@ -141,18 +133,12 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
           </div>
         </fieldset>
 
-        <div
-          id="status-input-validation-error"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {state.fieldErrors?.status &&
-            state.fieldErrors.status.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
-        </div>
+        {state.fieldErrors?.status && (
+          <ValidationErrorsDisplay<CreateInvoiceFormData>
+            fieldName="status"
+            errorMessages={state.fieldErrors.status}
+          />
+        )}
       </div>
 
       <div className="mt-6 flex justify-end gap-4">
