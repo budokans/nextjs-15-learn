@@ -18,20 +18,18 @@ export type Customer = {
   image_url: string;
 };
 
-const invoiceStatusSchema = z.enum(['pending', 'paid']);
-
-const buildInvoiceStatusSchema = (
-  params?: z.RawCreateParams
-): z.ZodEnum<['pending', 'paid']> => z.enum(['pending', 'paid'], params);
-
-const invoiceDBSchema = z.object({
-  id: z.string(),
-  customer_id: z.string(),
-  amount: z.number(),
-  date: z.string(),
-  status: invoiceStatusSchema,
+const invoiceStatusSchema = z.enum(['pending', 'paid'], {
+  invalid_type_error: 'Please select an invoice status.',
 });
-export type DBInvoice = z.infer<typeof invoiceDBSchema>;
+type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
+
+export interface DBInvoice {
+  readonly id: string;
+  readonly customer_id: string;
+  readonly amount: number;
+  readonly date: string;
+  readonly status: InvoiceStatus;
+}
 
 export type FormDataGet = FormDataEntryValue | null;
 
@@ -47,9 +45,7 @@ export const mutateInvoiceFormDataSchema = z
     amount: z.coerce
       .number()
       .gt(0, { message: 'Please enter an amount greater than $0.' }),
-    status: buildInvoiceStatusSchema({
-      invalid_type_error: 'Please select an invoice status.',
-    }),
+    status: invoiceStatusSchema,
   })
   .readonly();
 export type MutateInvoiceFormData = z.infer<typeof mutateInvoiceFormDataSchema>;

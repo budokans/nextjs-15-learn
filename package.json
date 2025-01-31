@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "type-check": "tsc -p tsconfig.json",
     "lint": "next lint",
     "build": "next build",
     "dev": "next dev --turbopack",
