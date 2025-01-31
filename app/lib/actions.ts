@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { AuthError } from 'next-auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
@@ -8,9 +9,15 @@ import {
   type DBInvoice,
   type MutateInvoiceRawFormData,
   type MutateInvoiceFormData,
+  type AuthenticateRawFormData,
   mutateInvoiceFormDataSchema,
 } from '@/app/lib/definitions';
-import { buildRawFormData, sanitiseCreateInvoiceData } from '@/app/lib/utils';
+import {
+  buildRawCredentialsFormData,
+  buildRawInvoiceFormData,
+  sanitiseCreateInvoiceData,
+} from '@/app/lib/utils';
+import { signIn } from '@/auth';
 
 interface ActionError {
   readonly fieldErrors?: {
@@ -30,13 +37,13 @@ export const createInvoice = async (
   _: MutateInvoiceActionState,
   formData: FormData
 ): Promise<MutateInvoiceActionState> => {
-  const rawFormData = buildRawFormData(formData);
+  const rawFormData = buildRawInvoiceFormData(formData);
   const formDataParseResult =
     mutateInvoiceFormDataSchema.safeParse(rawFormData);
 
   if (!formDataParseResult.success) {
     return {
-      formData: buildRawFormData(formData),
+      formData: rawFormData,
       error: buildActionError(formDataParseResult.error),
     };
   } else {
@@ -74,13 +81,13 @@ export const updateInvoice = async (
   formData: FormData,
   id: string
 ): Promise<MutateInvoiceActionState> => {
-  const rawFormData = buildRawFormData(formData);
+  const rawFormData = buildRawInvoiceFormData(formData);
   const formDataParseResult =
     mutateInvoiceFormDataSchema.safeParse(rawFormData);
 
   if (!formDataParseResult.success) {
     return {
-      formData: buildRawFormData(formData),
+      formData: rawFormData,
       error: buildActionError(formDataParseResult.error),
     };
   } else {
@@ -108,6 +115,43 @@ export const updateInvoice = async (
   }
 
   redirect(afterCreatePath);
+};
+
+export interface AuthenticateActionState {
+  readonly formData: AuthenticateRawFormData;
+  readonly errorMessage?: string;
+}
+
+export const authenticate = async (
+  _prevState: AuthenticateActionState,
+  formData: FormData
+): Promise<AuthenticateActionState> => {
+  const rawFormData = buildRawCredentialsFormData(formData);
+
+  try {
+    await signIn('credentials', formData);
+
+    return {
+      formData: rawFormData,
+    };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return {
+            formData: rawFormData,
+            errorMessage: 'Invalid credentials.',
+          };
+        default:
+          return {
+            formData: rawFormData,
+            errorMessage: 'Something went wrong.',
+          };
+      }
+    } else {
+      throw error;
+    }
+  }
 };
 
 const buildActionError = (

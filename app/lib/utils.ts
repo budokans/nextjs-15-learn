@@ -1,4 +1,5 @@
 import type {
+  AuthenticateRawFormData,
   MutateInvoiceData,
   MutateInvoiceFormData,
   MutateInvoiceRawFormData,
@@ -85,12 +86,19 @@ export const sanitiseCreateInvoiceData = (
   date: formatDate(new Date()),
 });
 
-export const buildRawFormData = (
+export const buildRawInvoiceFormData = (
   formData: FormData
 ): MutateInvoiceRawFormData => ({
   customerId: formData.get('customerId'),
   amount: formData.get('amount'),
   status: formData.get('status'),
+});
+
+export const buildRawCredentialsFormData = (
+  formData: FormData
+): AuthenticateRawFormData => ({
+  email: formData.get('email'),
+  password: formData.get('password'),
 });
 
 export const stringOrNull = (value: unknown): string | null =>
