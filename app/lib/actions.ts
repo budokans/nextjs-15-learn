@@ -1,15 +1,18 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import {
   type DBInvoice,
-  createInvoiceFormDataSchema,
+  type MutateInvoiceRawFormData,
+  type MutateInvoiceFormData,
+  mutateInvoiceFormDataSchema,
 } from '@/app/lib/definitions';
-import { sanitiseCreateInvoiceData } from '@/app/lib/utils';
+import { buildRawFormData, sanitiseCreateInvoiceData } from '@/app/lib/utils';
 
-export interface MutateInvoiceErrorState {
+interface ActionError {
   readonly fieldErrors?: {
     readonly customerId?: readonly string[];
     readonly amount?: readonly string[];
@@ -18,29 +21,23 @@ export interface MutateInvoiceErrorState {
   readonly message?: string;
 }
 
-export type MutationInvoiceResponse = MutateInvoiceErrorState;
+export interface MutateInvoiceActionState {
+  readonly formData: MutateInvoiceRawFormData;
+  readonly error: ActionError | null;
+}
 
 export const createInvoice = async (
-  _: MutateInvoiceErrorState,
+  _: MutateInvoiceActionState,
   formData: FormData
-): Promise<MutateInvoiceErrorState> => {
-  const formDataParseResult = createInvoiceFormDataSchema.safeParse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
-  });
+): Promise<MutateInvoiceActionState> => {
+  const rawFormData = buildRawFormData(formData);
+  const formDataParseResult =
+    mutateInvoiceFormDataSchema.safeParse(rawFormData);
 
   if (!formDataParseResult.success) {
-    console.log({
-      returning: {
-        fieldErrors: formDataParseResult.error.flatten().fieldErrors,
-        message: 'Missing fields. Failed to create invoice.',
-      },
-    });
-
     return {
-      fieldErrors: formDataParseResult.error.flatten().fieldErrors,
-      message: 'Missing fields. Failed to create invoice.',
+      formData: buildRawFormData(formData),
+      error: buildActionError(formDataParseResult.error),
     };
   } else {
     const sanitisedFormData = sanitiseCreateInvoiceData(
@@ -58,7 +55,10 @@ export const createInvoice = async (
       console.error(error);
 
       return {
-        message: 'Database Error: failed to create invoice.',
+        formData: rawFormData,
+        error: {
+          message: 'Database Error: failed to create invoice.',
+        },
       };
     }
   }
@@ -75,7 +75,7 @@ export const updateInvoice = async (
 ): Promise<void> => {
   try {
     const { customer_id, amount, status } = sanitiseCreateInvoiceData(
-      createInvoiceFormDataSchema.parse({
+      mutateInvoiceFormDataSchema.parse({
         customer_id: formData.get('customerId'),
         amount: formData.get('amount'),
         status: formData.get('status'),
@@ -95,6 +95,13 @@ export const updateInvoice = async (
 
   redirect(afterCreatePath);
 };
+
+const buildActionError = (
+  error: z.ZodError<MutateInvoiceFormData>
+): ActionError => ({
+  fieldErrors: error.flatten().fieldErrors,
+  message: 'Missing fields. Failed to create invoice.',
+});
 
 export const deleteInvoice = async (id: string): Promise<void> => {
   try {

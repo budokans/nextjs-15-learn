@@ -33,7 +33,15 @@ const invoiceDBSchema = z.object({
 });
 export type DBInvoice = z.infer<typeof invoiceDBSchema>;
 
-export const createInvoiceFormDataSchema = z
+export type FormDataGet = FormDataEntryValue | null;
+
+export interface MutateInvoiceRawFormData {
+  customerId: FormDataGet;
+  amount: FormDataGet;
+  status: FormDataGet;
+}
+
+export const mutateInvoiceFormDataSchema = z
   .object({
     customerId: z.string({ invalid_type_error: 'Please select a customer.' }),
     amount: z.coerce
@@ -44,10 +52,9 @@ export const createInvoiceFormDataSchema = z
     }),
   })
   .readonly();
-export type CreateInvoiceFormData = z.infer<typeof createInvoiceFormDataSchema>;
+export type MutateInvoiceFormData = z.infer<typeof mutateInvoiceFormDataSchema>;
 
-export const createInvoiceDataSchema = invoiceDBSchema.omit({ id: true });
-export type CreateInvoiceData = z.infer<typeof createInvoiceDataSchema>;
+export type MutateInvoiceData = Omit<DBInvoice, 'id'>;
 
 export type Revenue = {
   month: string;

@@ -1,6 +1,7 @@
 import type {
-  CreateInvoiceData,
-  CreateInvoiceFormData,
+  MutateInvoiceData,
+  MutateInvoiceFormData,
+  MutateInvoiceRawFormData,
   Revenue,
 } from '@/app/lib/definitions';
 
@@ -76,10 +77,21 @@ const toCents = (dollarValue: number): number => dollarValue * 100;
 const formatDate = (date: Date): string => date.toISOString().split('T')[0];
 
 export const sanitiseCreateInvoiceData = (
-  createInvoiceFormData: CreateInvoiceFormData
-): CreateInvoiceData => ({
-  ...createInvoiceFormData,
-  customer_id: createInvoiceFormData.customerId,
-  amount: toCents(Number(createInvoiceFormData.amount)),
+  mutateInvoiceFormData: MutateInvoiceFormData
+): MutateInvoiceData => ({
+  ...mutateInvoiceFormData,
+  customer_id: mutateInvoiceFormData.customerId,
+  amount: toCents(Number(mutateInvoiceFormData.amount)),
   date: formatDate(new Date()),
 });
+
+export const buildRawFormData = (
+  formData: FormData
+): MutateInvoiceRawFormData => ({
+  customerId: formData.get('customerId'),
+  amount: formData.get('amount'),
+  status: formData.get('status'),
+});
+
+export const stringOrNull = (value: unknown): string | null =>
+  typeof value === 'string' ? value : null;
