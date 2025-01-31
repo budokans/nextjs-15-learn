@@ -70,27 +70,41 @@ export const createInvoice = async (
 const afterCreatePath = '/dashboard/invoices';
 
 export const updateInvoice = async (
-  id: string,
-  formData: FormData
-): Promise<void> => {
-  try {
-    const { customer_id, amount, status } = sanitiseCreateInvoiceData(
-      mutateInvoiceFormDataSchema.parse({
-        customer_id: formData.get('customerId'),
-        amount: formData.get('amount'),
-        status: formData.get('status'),
-      })
+  _: MutateInvoiceActionState,
+  formData: FormData,
+  id: string
+): Promise<MutateInvoiceActionState> => {
+  const rawFormData = buildRawFormData(formData);
+  const formDataParseResult =
+    mutateInvoiceFormDataSchema.safeParse(rawFormData);
+
+  if (!formDataParseResult.success) {
+    return {
+      formData: buildRawFormData(formData),
+      error: buildActionError(formDataParseResult.error),
+    };
+  } else {
+    const sanitisedFormData = sanitiseCreateInvoiceData(
+      formDataParseResult.data
     );
 
-    await sql<DBInvoice>`
-      UPDATE invoices
-      SET customer_id = ${customer_id}, amount = ${amount}, status = ${status}
-      WHERE id = ${id}
+    try {
+      await sql<DBInvoice>`
+        UPDATE invoices
+        SET customer_id = ${sanitisedFormData.customer_id}, amount = ${sanitisedFormData.amount}, status = ${sanitisedFormData.status}
+        WHERE id = ${id}
     `;
+      revalidatePath(afterCreatePath);
+    } catch (error) {
+      console.error(error);
 
-    revalidatePath(afterCreatePath);
-  } catch (error) {
-    console.error(error);
+      return {
+        formData: rawFormData,
+        error: {
+          message: 'Database Error: failed to create invoice.',
+        },
+      };
+    }
   }
 
   redirect(afterCreatePath);
